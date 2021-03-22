@@ -26,6 +26,11 @@
 
 ## RestAPI
 
+#### You can find postman collection
+`/ipd_analysis.postman_collection.json`
+
+#### New files will be uploaded under 'uploads/' folder
+
 ## Check status
 
 ### Request
