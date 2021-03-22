@@ -27,9 +27,24 @@ jest.mock('multer', () => {
 describe('Helper', () => {
     describe('upload', () => {
         test('success', async () => {
-            // await multer.single.mockReturnValue(true);
             serviceHelper.upload()
+        })
+    })
 
+    describe('multiSort', () => {
+        const array = [
+            {'id': 1, 'name': 'xyz'},
+            {'id': 2, 'name': 'def'},
+            {'id': 2, 'name': 'abc'}
+        ]
+        test('success without any sorting', async () => {
+            const response = serviceHelper.multiSort(array)
+            expect(response).toEqual(array)
+        })
+
+        test('success with sorting', async () => {
+            const response = serviceHelper.multiSort(array, { id: 'asc', 'name': 'asc'})
+            expect(response).toEqual(array)
         })
     })
 

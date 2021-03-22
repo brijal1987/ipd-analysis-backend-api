@@ -2,6 +2,8 @@ const reportController = require('../../controllers/report.controller')
 const serviceHelper = require('../../services/helper')
 const { memoryReportFile } = require('../../config')
 var multer  = require('multer')
+const fs = require('fs');
+jest.mock('fs')
 
 const mockResponse = () => {
     const res = {}
@@ -202,6 +204,144 @@ describe('reportController', () => {
                 }
             })
         })
+    })
+
+
+    describe('Generate report', () => {
+        test('when body data not passed properly', async () => {
+            const res = mockResponse()
+
+            await reportController.generate_report({
+                body: {
+                    filename: undefined
+                }
+            }, res)
+            expect(res.status).toHaveBeenCalledWith(400)
+            expect(res.json).toHaveBeenCalledWith({
+                error: 1,
+                message: 'Please specify filename with .csv'
+            })
+        })
+
+        test('when body data not passed properly', async () => {
+            const res = mockResponse()
+
+            await reportController.generate_report({
+                body: {
+                    filename: 'test'
+                }
+            }, res)
+            expect(res.status).toHaveBeenCalledWith(400)
+            expect(res.json).toHaveBeenCalledWith({
+                error: 1,
+                message: 'Please specify filename with .csv'
+            })
+        })
+
+        test('when data from csv not found', async () => {
+            jest.spyOn(serviceHelper, 'readMemoryReportFile').mockResolvedValue(false)
+            const res = mockResponse()
+
+            await reportController.generate_report({
+                body: {
+                    filename: 'test.csv'
+                }
+            }, res)
+            expect(res.status).toHaveBeenCalledWith(404)
+            expect(res.json).toHaveBeenCalledWith({
+                error: 1,
+                message: `${memoryReportFile} is not exist, please ingest file first!`
+            })
+        })
+
+        test('when success', async () => {
+            const categories = []
+            const tempCategories = {}
+            tempCategories["SKU"] = 'test'
+            tempCategories["Section"] = 'test'
+            tempCategories["2019-11 Units"] = 1
+            tempCategories["2019-11 Gross Sales"] = 1000
+            categories.push(tempCategories)
+            jest.spyOn(serviceHelper, 'readMemoryReportFile').mockResolvedValue(categories)
+            const res = mockResponse()
+            await reportController.generate_report({
+                body: {
+                    filename: 'test.csv'
+                }
+            }, res)
+            await fs.writeFileSync.mockReturnValue(true);
+
+            expect(res.status).toHaveBeenCalledWith(200)
+            expect(res.json).toHaveBeenCalledWith({
+                success: 1,
+                "message": "src/files/test.csv was saved in the current directory!"
+            })
+        })
+    })
+
+    describe('get generated file', () => {
+        const req = {}
+        test('when params data not passed properly', async () => {
+            const res = mockResponse()
+
+            await reportController.get_file({
+                params: {
+                    filename: undefined
+                }
+            }, res)
+            expect(res.status).toHaveBeenCalledWith(400)
+            expect(res.json).toHaveBeenCalledWith({
+                error: 1,
+                message: 'Please specify filename with .csv'
+            })
+        })
+
+        test('when params data not passed properly', async () => {
+            const res = mockResponse()
+
+            await reportController.get_file({
+                params: {
+                    filename: 'test'
+                }
+            }, res)
+            expect(res.status).toHaveBeenCalledWith(400)
+            expect(res.json).toHaveBeenCalledWith({
+                error: 1,
+                message: 'Please specify filename with .csv'
+            })
+        })
+
+        test('when body data not passed properly', async () => {
+            const res = mockResponse()
+            await reportController.get_file({
+                params: {
+                    filename: 'test.csv'
+                }
+            }, res)
+            jest.spyOn(serviceHelper, 'checkFileExists').mockResolvedValue(false)
+
+            expect(res.status).toHaveBeenCalledWith(400)
+            expect(res.json).toHaveBeenCalledWith({
+                error: 1,
+                message: "src/files/test.csv is not available"
+            })
+        })
+
+        test('when success', async () => {
+            const res = {
+                download: jest.fn()
+            }
+            await reportController.get_file({
+                params: {
+                    filename: 'test.csv'
+                }
+            }, res)
+            jest.spyOn(serviceHelper, 'checkFileExists').mockResolvedValue(true)
+            jest.spyOn(res, 'download').mockResolvedValue(true)
+            expect(res.download).toHaveBeenCalled();
+        })
+
+
     })
 
     describe('get exit', () => {

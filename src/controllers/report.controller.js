@@ -197,7 +197,7 @@ exports.generate_report = async (req, res, next) => {
         }
         fs.writeFileSync(`${getUploadFilesDirectory}/${filename}`, writeStr)
 
-        return res.json({
+        return res.status(200).json({
             success: 1,
             message: `${getUploadFilesDirectory}/${filename} was saved in the current directory!`
         })
